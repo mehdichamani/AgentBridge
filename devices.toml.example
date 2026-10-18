@@ -1,0 +1,19 @@
+# ==============================================================================
+# SAMPLE CENTRAL NETWORK & DEVICES INVENTORY
+# Copy or symlink to devices.toml:
+#   ln -s /path/to/your/devices.toml devices.toml
+# ==============================================================================
+
+[devices.work]
+name = "Work Desktop"
+desc = "Workstation or Remote Server"
+type = "workstation"
+os = "linux"
+routes = ["work"]
+
+[devices.switch_sample]
+name = "Core Switch"
+desc = "Main rack switch"
+type = "cisco"
+ip = "192.168.30.10"
+model = "WS-C2960"

@@ -1,0 +1,20 @@
+# Mount directory (SSHFS mount to remote work environment)
+mnt/
+mnt/**
+
+# Sensitive configuration symlinks & network maps
+ssh_config
+devices.toml
+
+# Local environment / secrets / keys
+*.pem
+*.key
+*.id_rsa
+*.id_ed25519
+*.env
+*.local
+
+# Temporary & system files
+*.log
+.DS_Store
+Thumbs.db

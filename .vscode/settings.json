@@ -1,0 +1,9 @@
+{
+    "git.enabled": false,
+    "git.autorefresh": false,
+    "git.autoRepositoryDetection": false,
+    "scm.autoReveal": false,
+    "files.watcherExclude": {
+        "**/mnt/**": true
+    }
+}

@@ -1,0 +1,26 @@
+# ==============================================================================
+# SAMPLE SSH CONFIGURATION
+# Copy or symlink to ssh_config:
+#   ln -s /path/to/your/config ssh_config
+# ==============================================================================
+
+Host *
+  ServerAliveInterval 30
+  ServerAliveCountMax 3
+  TCPKeepAlive yes
+  StrictHostKeyChecking accept-new
+
+# --- Remote Workstation ---
+Host work
+  HostName example-work.domain.com
+  User unreal
+  Port 22456
+
+# --- Cisco Switch Default Settings ---
+Host 192.168.30.*
+  User admin
+  HostKeyAlgorithms +ssh-rsa
+  PubkeyAcceptedKeyTypes +ssh-rsa
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
