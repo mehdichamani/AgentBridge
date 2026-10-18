@@ -1,8 +1,10 @@
 {
-    "git.enabled": false,
-    "git.autorefresh": false,
-    "git.autoRepositoryDetection": false,
-    "scm.autoReveal": false,
+    "git.enabled": true,
+    "git.autorefresh": true,
+    "git.autoRepositoryDetection": true,
+    "git.ignoredRepositories": [
+        "mnt"
+    ],
     "files.watcherExclude": {
         "**/mnt/**": true
     }
