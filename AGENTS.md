@@ -1,73 +1,49 @@
-# دستورالعمل ایجنت هوش مصنوعی برای کار از راه دور (Boomban Remote Agent Guidelines)
+# AgentBridge: AI Coding Agent Guidelines for Remote Workspaces
 
-این محیط کار (`boomban-remote`) صرفاً پل ارتباطی و دسترسی از راه دور هوش مصنوعی و کاربر به ماشین مقصد (`work`)، شبکه و مخزن `boomban-suite` است.
-
----
-
-## 🧭 ۱. ساختار فضا و تعامل ریموت
-- **اصل بنیادین ریموت‌محور (Remote-First Directive):** تمامی دستورات، ویرایش‌ها، تحلیل‌ها و تسک‌هایی که در این محیط مطرح می‌شوند، مستقیماً مربوط به مخزن ریموت `boomban-suite` و تجهیزات شبکه مقصد هستند.
-- **پوشه ریموت [mnt/](file:///mnt):** فایل‌های پروژه اصلی از طریق SSHFS درون پوشه `mnt/` مانت شده‌اند.
-- **بررسی اتصال:** همیشه پیش از هر کاری با دستور `mountpoint -q mnt || ./mount.sh` از مانت بودن پوشه اطمینان حاصل کن.
-- **اجرای دستورات در مقصد:** کلیه اسکریپت‌ها، تست‌ها و دستورات ترمینال بر روی ماشین مقصد با `./remote-run.sh "<command>"` اجرا می‌شوند.
-- **پروتکل اصولی و الزامی کار با گیت (Remote Git Protocol):**
-  - ⛔ **خط قرمز:** به هیچ عنوان نباید دستورات گیت (`git status`، `git diff`، `git commit`، `git add` و غیره) یا ابزارهای مبتنی بر فایل‌سیستم لوکال روی پوشه مانت‌شده‌ی `mnt/` اجرا شوند. فایل‌سیستم شبکه (SSHFS) برای پیمایش هزاران فایل طراحی نشده و باعث کندی شدید و فریز سیستم می‌شود.
-  - ✅ **روش اصولی:** کلیه عملیات گیت باید منحصراً به صورت مستقیم روی هاست مقصد ویندوز از طریق اسکریپت کمکی ریموت اجرا گردند:
-    ```bash
-    ./remote-run.sh "git status"
-    ./remote-run.sh "git add . && git commit -m 'commit message'"
-    ./remote-run.sh "git log -n 5 --oneline"
-    ```
+This repository is an **AgentBridge Workspace** — a lightweight, zero-lag bridge connecting local AI coding agents (Antigravity, Cursor, Claude Code, Copilot, etc.) and developers to remote servers, remote repositories, and edge devices.
 
 ---
 
-## 📌 ۲. مرجع قوانین اصلی و معماری پروژه ([mnt/AGENTS.md](file:///home/unreal/projects/boomban-remote/mnt/AGENTS.md))
+## 🧭 1. Core Operating Directives
 
-> [!IMPORTANT]
-> **قوانین بنیادین معماری، خطوط قرمز، تفکیک وظایف و استانداردهای توسعه پروژه منحصراً درون فایل مرجع [mnt/AGENTS.md](file:///home/unreal/projects/boomban-remote/mnt/AGENTS.md) مستقر هستند.**  
-> چه پروژه به صورت محلی بر روی خود سیستم مقصد اجرا شود و چه از راه دور از طریق این محیط، ایجنت موظف است تمامی قوانین مندرج در `mnt/AGENTS.md` را به عنوان تک‌منبع حقیقت رفتاری رعایت نماید.
+### 1.1 Remote-First Execution Directive
+- **Code & Repository State:** The real development workspace lives on the remote host (configured in `.env`).
+- **Local View ([mnt/](file:///mnt)):** Remote files are mounted locally via SSHFS for instant reading, searching, and editing.
+- **Remote Commands:** Never run build scripts, tests, servers, or environment-dependent commands locally. Always use:
+  ```bash
+  ./remote-run.sh "<command>"
+  ```
 
-### خلاصه‌ای از مهم‌ترین اصول مرجع در `mnt/AGENTS.md`:
-1. **معماری سه‌بخشی:** تفکیک ۴ زیرپروژه مستقل (`boomban`, `simban`, `mojban`, `didban`)، قلمرو ایجنت (`agent_core/`) و مستندات انسانی (`docs/`).
-2. **اصل اولویت قطعی دیتابیس در خواندن (Database-First Read Directive):** استعلام اطلاعات شبکه، پورت‌ها و مک‌ها منحصراً از دیتابیس هوشمند `agent_core/agent_network.db` با ابزار CLI فشرده `python agent_core/query.py`.
-3. **پروتکل الزام به‌روزرسانی دیتابیس در پایان کار (Database Sync-On-Complete):** ثبت هرگونه تغییر، نود یا کابل جدید در دیتابیس پیش از اتمام تسک و همگام‌سازی گراف با `agent_core/update_viewer.py`.
-4. **پیش‌فرض فقط-خواندنی (Read-Only Safety First):** عدم تغییر کانفیگ تجهیزات بدون تأیید کتبی کاربر.
+### 1.2 Remote Git Protocol (CRITICAL / DO NOT VIOLATE)
+- ⛔ **RED LINE:** Never execute `git` commands (`git status`, `git commit`, `git add`, `git diff`) or file indexing tools inside the mounted `mnt/` folder from the local shell. Network filesystems (SSHFS/FUSE) are not optimized for traversal of deep `.git` trees and will freeze the IDE and network socket.
+- ✅ **Standard Procedure:** All Git operations for the remote project must be run directly on the remote host:
+  ```bash
+  ./remote-run.sh "git status"
+  ./remote-run.sh "git diff"
+  ./remote-run.sh "git add . && git commit -m '<commit-message>'"
+  ./remote-run.sh "git push origin <branch>"
+  ```
+- *Note:* The local `AgentBridge` workspace itself has its own independent `.git` repository, which only tracks bridge scripts, templates, and configurations while strictly ignoring `mnt/` and secrets.
 
----
-
-## 🌐 ۳. نقشه‌راه ارتباط شبکه و دسترسی تجهیزات (SSH & Network Routing)
-
-برای اتصال به تجهیزات از اسامی و مشخصات ثبت‌شده در [ssh_config](file:///ssh_config) و [devices.toml](file:///devices.toml) استفاده شود:
-
-### الف) کامپیوتر محل کار (Work PC):
-- **نام‌های هاست SSH:** `work` (پابلیک `217.219.149.57:22456`) یا `workp` (پابلیک رزرو `5.202.33.161:22456`)
-- **اجرای فرامین در مخزن ویندوز:** `./remote-run.sh <command>`
-
-### ب) تانل مستقیم WireGuard به روتر مسترمایند:
-- **اینترفیس:** `wg-work` روی سیستم لوکال
-- **آدرس روتر:** `10.50.0.1:22789` (SSH مستقیم با کلید مستقر)
-- **دسترسی مستقیم:** اتصال به ساب‌نت `192.168.1.0/24` و ایستگاه کاری `it2` (`192.168.1.100`) با لتنسی پایین (~45ms).
-
-### ج) روترها و رادیوهای میکروتیک (RouterOS):
-- `Router-Mastermind` (لوکال `192.168.1.1` یا وایرگارد `10.50.0.1` روی پورت `22789`)
-- `Router-Pishgaman` (لوکال `172.20.0.1:22789`)
-- رادیوهای هاب و استیشن در ساب‌نت `172.20.0.x`
-- اتصال مستقیم SSH: `ssh Router-Mastermind "/ip route print"`
-
-### د) سوئیچ‌های لایه ۲ سیسکو (Cisco IOS):
-- سوئیچ‌ها در رنج `192.168.30.x` قرار دارند و دسترسی به آن‌ها از طریق Jump Host (`ProxyJump work` یا اجرای مستقیم SSH در شل ریموت `remote-run.sh`) صورت می‌گیرد.
+### 1.3 Read-Only Safety First
+- Do not modify production configurations, network interfaces, or critical services on remote hosts without explicit user confirmation.
 
 ---
 
-## 🛠️ ۴. ابزارهای کمکی محیط ریموت
-- `./remote-run.sh <command>`: اجرای دستورات مستقیم داخل پوشه پروژه روی ویندوز.
-- `./cisco-bridge.sh <switch> "<command>"`: **پل سیسکو**؛ واسط هوشمند ارسال دستور به سوئیچ‌های سیسکو با Fallback خودکار (SSH با کلید -> SSH با پسورد -> Telnet) و دریافت مشخصات از دیتابیس (بدون نیاز به دانستن IP).
-- `./mikrotik-bridge.sh <device> "<command>"`: **پل میکروتیک**؛ واسط هوشمند ارسال دستور به روترها، رادیوها و اکسس‌پوینت‌های میکروتیک با Fallback خودکار (SSH با کلید -> SSH با پسورد -> API) و تفکیک پورت‌های ۲۲ و ۲۲۷۸۹.
-- `./mount.sh`: اتصال مجدد و مانت در صورت قطع ارتباط SSHFS.
-- `./unmount.sh`: قطع ایمن اتصال FUSE.
-- `./proxy.sh`: ایجاد تونل SOCKS5 روی پورت `1080` برای مرور وب‌سرویس‌ها و پنل‌های داخلی تجهیزات.
+## 🛠️ 2. Bridge Tooling Reference
 
-### مدیریت و ریستارت تمیز سرویس‌ها روی مقصد:
-- **مشاهده وضعیت موج‌بان:** `./remote-run.sh "cd mojban; .\start.ps1 -Action status"`
-- **توقف سرویس موج‌بان:** `./remote-run.sh "cd mojban; .\start.ps1 -Action stop"`
-- **اجرای سرویس در پس‌زمینه:** `./remote-run.sh "cd mojban; .\start.ps1 -Action start-bg -NoBrowser"`
-- **ریستارت تمیز:** `./remote-run.sh "cd mojban; .\start.ps1 -Action stop; Start-Sleep -Seconds 2; .\start.ps1 -Action start-bg -NoBrowser"`
+| Tool / Script | Purpose | Example Usage |
+| :--- | :--- | :--- |
+| `./remote-run.sh [cmd]` | Executes commands or opens shell inside remote project directory | `./remote-run.sh pytest` or `./remote-run.sh "npm run build"` |
+| `./mount.sh` | Mounts remote project via performance-optimized SSHFS | `./mount.sh` |
+| `./unmount.sh` | Safely unmounts SSHFS with lazy-unmount fallback | `./unmount.sh` |
+| `./proxy.sh [port]` | Spawns a background SOCKS5 proxy via remote host | `./proxy.sh 1080` |
+| `load-env.sh` | Common environment loader for hosts, routing, and paths | Sourced automatically by scripts |
+
+---
+
+## 🌐 3. Network & Edge Device Bridges (If Enabled)
+
+When working in environments that manage switches, routers, or IoT nodes:
+- Consult local inventory files (`devices.toml` or custom configs).
+- Use designated bridge helpers (e.g. `./cisco-bridge.sh`, `./mikrotik-bridge.sh`) to query or dispatch commands through the remote jump host rather than attempting direct connections.

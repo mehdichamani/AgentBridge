@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
-# Runs any command directly on the remote Windows host inside the project folder
+# ==============================================================================
+# AgentBridge: remote-run.sh
+# Execute any command or open an interactive shell in the remote project directory
+# ==============================================================================
+set -e
 
-# اولویت اتصال سریع با تانل وایرگارد (it2)؛ در غیر اینصورت اینترنت پابلیک (work)
-if ping -c 1 -W 1 192.168.1.100 &>/dev/null; then
-    REMOTE_HOST="it2"
-else
-    REMOTE_HOST="work"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/load-env.sh"
+
+ACTIVE_HOST="$(resolve_active_host)"
+
+if [ -z "${REMOTE_PROJECT_DIR}" ]; then
+    echo "❌ Error: REMOTE_PROJECT_DIR is not configured in .env" >&2
+    exit 1
 fi
-
-PROJECT_DIR="C:/Users/Mehdi/projects/boomban-suite"
 
 if [ $# -eq 0 ]; then
     # Interactive SSH shell into remote project directory
-    exec ssh -t "${REMOTE_HOST}" "cd '${PROJECT_DIR}' ; cmd.exe /k"
+    echo "🚀 Connecting to interactive shell on ${ACTIVE_HOST}:${REMOTE_PROJECT_DIR}..."
+    exec ssh -t "${ACTIVE_HOST}" "cd '${REMOTE_PROJECT_DIR}' && bash --login"
 else
     # Execute specific command on remote host
-    exec ssh "${REMOTE_HOST}" "cd '${PROJECT_DIR}' && $*"
+    exec ssh "${ACTIVE_HOST}" "cd '${REMOTE_PROJECT_DIR}' && $*"
 fi
