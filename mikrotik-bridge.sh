@@ -15,8 +15,9 @@ if [ ! -d "${SCRIPT_DIR}/mnt" ]; then
 fi
 
 if [ $# -eq 0 ]; then
-    exec "${SCRIPT_DIR}/remote-run.sh" "python agent_core/mikrotik_bridge.py list"
+    exec "${SCRIPT_DIR}/remote-run.sh" "cd mojban && uv run python ../agent_core/mikrotik_bridge.py list"
 else
     # اجرای دستور با حفظ ساختار آرگومان‌ها
-    exec "${SCRIPT_DIR}/remote-run.sh" "python agent_core/mikrotik_bridge.py $*"
+    exec "${SCRIPT_DIR}/remote-run.sh" "cd mojban && uv run python ../agent_core/mikrotik_bridge.py $*"
 fi
+
